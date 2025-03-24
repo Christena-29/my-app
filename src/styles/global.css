@@ -52,3 +52,20 @@ body {
   padding: 20px; /* Optional: Add some padding inside the container */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+.bg-navy-900 {
+    background-color: #1b1f3b;
+  }
+  
+  .text-navy-900 {
+    color: #1b1f3b;
+  }
+  
+  .bg-violet-700 {
+    background-color: #6b46c1;
+  }
+  
+ 
+  
+  .button:hover {
+    background-color: #553c9a;
+  }

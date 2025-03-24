@@ -58,7 +58,8 @@ const RegisterPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate("/login");
+      alert("Registration successful!");
+      navigate("/profile"); // Navigate to the profile creation page
     }
   };
 
@@ -66,29 +67,91 @@ const RegisterPage = () => {
     <div className="container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} className="input-field" />
+        <input
+          type="text"
+          name="firstName"
+          placeholder="First Name"
+          value={formData.firstName}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.firstName && <p className="error-text">{errors.firstName}</p>}
-        
-        <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} className="input-field" />
+
+        <input
+          type="text"
+          name="lastName"
+          placeholder="Last Name"
+          value={formData.lastName}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.lastName && <p className="error-text">{errors.lastName}</p>}
 
-        <input type="text" name="username" placeholder="Username" value={formData.username} onChange={handleChange} className="input-field" />
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          className="input-field"
+        />
 
-        <input type="date" name="age" value={formData.age} onChange={handleChange} className="input-field" />
+        <input
+          type="date"
+          name="age"
+          value={formData.age}
+          onChange={handleChange}
+          className="input-field"
+        />
 
-        <input type="text" name="contactNumber" placeholder="Contact Number" value={formData.contactNumber} onChange={handleChange} className="input-field" />
+        <input
+          type="text"
+          name="contactNumber"
+          placeholder="Contact Number"
+          value={formData.contactNumber}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.contactNumber && <p className="error-text">{errors.contactNumber}</p>}
 
-        <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input-field" />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.email && <p className="error-text">{errors.email}</p>}
 
-        <input type="text" name="aadharNumber" placeholder="Aadhar Number" value={formData.aadharNumber} onChange={handleChange} className="input-field" />
+        <input
+          type="text"
+          name="aadharNumber"
+          placeholder="Aadhar Number"
+          value={formData.aadharNumber}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.aadharNumber && <p className="error-text">{errors.aadharNumber}</p>}
 
-        <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="input-field" />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.password && <p className="error-text">{errors.password}</p>}
 
-        <input type="password" name="confirmPassword" placeholder="Confirm Password" value={formData.confirmPassword} onChange={handleChange} className="input-field" />
+        <input
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          className="input-field"
+        />
         {errors.confirmPassword && <p className="error-text">{errors.confirmPassword}</p>}
 
         <button type="submit" className="button button-secondary">Register</button>
