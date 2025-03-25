@@ -39,6 +39,9 @@ function EmployerDashboard() {
             <Link to="/employer/jobs" className="nav-link">My Jobs</Link>
             <Link to="/employer/applications" className="nav-link">Applications</Link>
             <Link to="/employer/profile" className="nav-link">Company Profile</Link>
+            <Link to="/employer/nearby-talent" className="nav-link nearby-jobs-link">
+              <i className="location-pin-icon"></i> Nearby Talent
+            </Link>
           </div>
           
           <div className="user-profile">
@@ -55,7 +58,12 @@ function EmployerDashboard() {
         <section className="dashboard-welcome">
           <h1>Welcome back, Tech Company!</h1>
           <p>Manage your job listings and applications.</p>
-          <Link to="/employer/jobs/new" className="post-job-btn">+ Post New Job</Link>
+          <div className="welcome-actions">
+            <Link to="/employer/jobs/new" className="post-job-btn">+ Post New Job</Link>
+            <Link to="/employer/nearby-talent" className="nearby-talent-button">
+              <i className="map-marker-icon"></i> Find Nearby Talent
+            </Link>
+          </div>
         </section>
 
         <div className="dashboard-stats">
