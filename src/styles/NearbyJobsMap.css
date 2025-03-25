@@ -1,0 +1,348 @@
+.map-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.simple-map-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.map-header {
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 15px 0;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.logo-small {
+  height: 40px;
+}
+
+.back-to-dashboard {
+  color: #4a6bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.back-to-dashboard:hover {
+  text-decoration: underline;
+}
+
+.back-button {
+  padding: 8px 16px;
+  background-color: #4a6bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.map-container {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.simulated-map {
+  flex: 1;
+  background-color: #e8eaed;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%23e8eaed" width="100" height="100" /><path d="M0,0 L100,0 L100,100 L0,100 Z" stroke="%23ffffff" stroke-width="0.5" fill="none" /><path d="M50,0 L50,100 M0,50 L100,50" stroke="%23ffffff" stroke-width="0.5" /></svg>');
+  background-size: 50px 50px;
+}
+
+.simple-map {
+  flex: 1;
+  background-color: #f5f5f5;
+  position: relative;
+  background-image: radial-gradient(circle, #ddd 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.coordinates-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.grid-line {
+  position: absolute;
+  background-color: rgba(200, 200, 200, 0.5);
+}
+
+.horizontal {
+  width: 100%;
+  height: 1px;
+}
+
+.vertical {
+  height: 100%;
+  width: 1px;
+}
+
+.map-attribution {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 12px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.user-marker, .job-marker, .new-job-marker {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+}
+
+.user-marker, .job-marker {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.user-marker {
+  background-color: #4285F4;
+  border: 2px solid white;
+  z-index: 20;
+  left: 50%;
+  top: 50%;
+}
+
+.job-marker {
+  background-color: #EA4335;
+  border: 2px solid white;
+}
+
+.job-marker.selected {
+  background-color: #FBBC05;
+  transform: translate(-50%, -50%) scale(1.2);
+  z-index: 15;
+}
+
+.new-job-marker {
+  background-color: #34A853;
+  border: 2px solid white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.marker-label {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.map-sidebar {
+  width: 350px;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.location-list {
+  width: 300px;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-location-btn, .save-location-btn {
+  background-color: #4a6bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-location-btn:hover, .save-location-btn:hover {
+  background-color: #3a5bff;
+}
+
+.location-instructions {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.job-locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.job-item {
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.location-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.job-item:hover, .job-item.selected {
+  border-color: #4a6bff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.job-item h3 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.location-marker {
+  width: 30px;
+  height: 30px;
+  background-color: #EA4335;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.company-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a6bff;
+  margin-bottom: 5px;
+}
+
+.job-address {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.location-details h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.location-details p {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.coordinates {
+  color: #666;
+  font-size: 12px;
+}
+
+.job-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.job-distance {
+  color: #34A853;
+}
+
+.job-salary {
+  color: #666;
+  font-weight: 500;
+}
+
+.selected-job-details {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #4a6bff;
+}
+
+.view-job-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #4a6bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.view-job-btn:hover {
+  background-color: #3a5bff;
+}
