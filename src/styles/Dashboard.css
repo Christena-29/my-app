@@ -341,3 +341,150 @@
 .post-job-btn {
   background: linear-gradient(to right, #4a6bff, #2e3192);
 }
+
+/* Add these styles to your Dashboard.css file */
+
+.empty-state {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.empty-state p {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.empty-state .btn-primary {
+  display: inline-block;
+  background-color: #4a6bff;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.empty-state .btn-primary:hover {
+  background-color: #3a5bff;
+}
+
+/* Additional styles for the jobs list in employee dashboard */
+.jobs-list.full-width {
+  display: block;
+  margin-top: 15px;
+}
+
+.jobs-list.full-width .job-card {
+  margin-bottom: 15px;
+  background-color: white;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.jobs-list.full-width .job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.jobs-list.full-width .job-card h3 {
+  font-size: 18px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.company-name {
+  color: #4a6bff;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.job-description-preview {
+  color: #555;
+  margin: 15px 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.job-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.view-job-btn {
+  padding: 8px 16px;
+  background-color: #4a6bff;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.apply-now-btn {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.apply-now-btn:hover {
+  background-color: #218838;
+}
+
+.already-applied {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  color: #666;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.job-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.job-details span {
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.job-type-icon, 
+.salary-icon,
+.date-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  opacity: 0.7;
+}
+
+.job-type-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>');
+}
+
+.salary-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>');
+}
+
+.date-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>');
+}
