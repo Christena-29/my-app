@@ -1,0 +1,268 @@
+.post-job-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.post-job-header {
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 15px 0;
+}
+
+.post-job-header .header-content {
+  display: flex;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.post-job-header img {
+  height: 40px;
+}
+
+.post-job-header h1 {
+  margin: 0 0 0 20px;
+  font-size: 1.8rem;
+  color: #333;
+  flex: 1;
+}
+
+.navigation-links {
+  display: flex;
+}
+
+.back-link {
+  color: #4a6bff;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.post-job-main {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.post-job-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.post-job-form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.form-section {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 25px;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-info {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.form-group-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-group-row .form-group {
+  flex: 1;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #4a6bff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 107, 255, 0.2);
+}
+
+.location-btn-container {
+  margin-bottom: 15px;
+}
+
+.get-location-btn {
+  background-color: #f0f4ff;
+  color: #4a6bff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.get-location-btn:hover {
+  background-color: #e0e8ff;
+}
+
+.get-location-btn:disabled {
+  background-color: #eee;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.post-job-button {
+  flex: 1;
+  background: linear-gradient(to right, #4a6bff, #2e3192);
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.post-job-button:hover {
+  box-shadow: 0 4px 12px rgba(74, 107, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.post-job-button:disabled {
+  background: #a0afff;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.cancel-button {
+  padding: 14px 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #666;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.cancel-button:hover {
+  background-color: #f5f5f5;
+}
+
+.error-message {
+  background-color: #fff5f5;
+  color: #dc3545;
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.success-message {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.success-message h2 {
+  color: #28a745;
+  margin-bottom: 15px;
+  font-size: 1.8rem;
+}
+
+.success-message p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  display: inline-block;
+  background: #4a6bff;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  background: #3a5bff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .post-job-header .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .post-job-header h1 {
+    margin: 10px 0;
+  }
+  
+  .navigation-links {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+  
+  .form-group-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}

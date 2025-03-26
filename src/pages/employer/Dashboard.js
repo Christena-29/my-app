@@ -1,31 +1,104 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getEmployerJobs, getEmployerApplications, getEmployerDetails } from '../../services/api';
 import '../../styles/Dashboard.css';
 
 function EmployerDashboard() {
+  const navigate = useNavigate();
   const [postedJobs, setPostedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Simulate fetching data
+  const [employerData, setEmployerData] = useState(null);
+  const [stats, setStats] = useState({
+    activeJobs: 0,
+    totalApplicants: 0,
+    newApplications: 0
+  });
+  
+  // Get employer information from localStorage
+  const employerId = localStorage.getItem('userId');
+  const employerName = localStorage.getItem('userName') || 'Employer';
+  
+  // Get employer's first initial and last initial for avatar
+  const getInitials = (name) => {
+    if (!name || name === 'Employer') return 'EM';
+    const nameParts = name.split(' ');
+    if (nameParts.length === 1) return name.substring(0, 2).toUpperCase();
+    return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+  };
+  
   useEffect(() => {
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      setPostedJobs([
-        { id: 1, title: 'Frontend Developer', applicants: 12, status: 'Active', postedDate: '2025-03-01' },
-        { id: 2, title: 'UX Designer', applicants: 8, status: 'Active', postedDate: '2025-02-25' },
-        { id: 3, title: 'Project Manager', applicants: 5, status: 'Active', postedDate: '2025-03-10' },
-      ]);
+    // Check if user is logged in as an employer
+    const userType = localStorage.getItem('userType');
+    if (!employerId || userType !== 'employer') {
+      alert('Please log in as an employer to view this page');
+      navigate('/login');
+      return;
+    }
+    
+    // Fetch posted jobs and applications
+    const fetchEmployerData = async () => {
+      setLoading(true);
       
-      setApplications([
-        { id: 1, name: 'Sarah Johnson', position: 'Frontend Developer', appliedDate: '2025-03-15', status: 'New' },
-        { id: 2, name: 'Michael Chen', position: 'UX Designer', appliedDate: '2025-03-10', status: 'In Review' },
-        { id: 3, name: 'Emily Davis', position: 'Frontend Developer', appliedDate: '2025-03-12', status: 'New' },
-      ]);
-      
-      setLoading(false);
-    }, 1000);
-  }, []);
+      try {
+        // Fetch employer details including company name
+        const employerDetails = await getEmployerDetails(employerId);
+        if (employerDetails.status === 'success') {
+          setEmployerData(employerDetails.employer);
+          // Also update localStorage with the latest company name
+          if (employerDetails.employer.company_name) {
+            localStorage.setItem('companyName', employerDetails.employer.company_name);
+          }
+        }
+        
+        // Fetch jobs posted by the employer
+        const jobsData = await getEmployerJobs(employerId);
+        // Ensure we have an array
+        const jobs = Array.isArray(jobsData) ? jobsData : [];
+        setPostedJobs(jobs);
+        
+        // Fetch applications received by the employer
+        const applicationData = await getEmployerApplications(employerId);
+        // Ensure we have an array
+        const applications = Array.isArray(applicationData) ? applicationData : [];
+        setApplications(applications);
+        
+        // Calculate statistics
+        const activeJobCount = jobs.filter(job => job.status === 'open').length;
+        const totalApplicantsCount = applications.length;
+        const newApplicationsCount = applications.filter(app => app.status === 'waiting').length;
+        
+        setStats({
+          activeJobs: activeJobCount,
+          totalApplicants: totalApplicantsCount,
+          newApplications: newApplicationsCount
+        });
+      } catch (error) {
+        console.error('Error fetching employer data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEmployerData();
+  }, [employerId, navigate]);
+  
+  // Get company name from either state or localStorage
+  const companyName = employerData?.company_name || localStorage.getItem('companyName') || 'Company';
+  
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('companyName');
+    navigate('/login');
+  };
 
   return (
     <div className="dashboard-container">
@@ -45,10 +118,10 @@ function EmployerDashboard() {
           </div>
           
           <div className="user-profile">
-            <div className="user-avatar">TC</div>
+            <div className="user-avatar">{getInitials(employerName)}</div>
             <div className="user-menu-dropdown">
-              <span>Tech Company</span>
-              <Link to="/logout" className="logout-btn">Logout</Link>
+              <span>{companyName}</span>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
             </div>
           </div>
         </div>
@@ -56,7 +129,7 @@ function EmployerDashboard() {
 
       <main className="dashboard-main">
         <section className="dashboard-welcome">
-          <h1>Welcome back, Tech Company!</h1>
+          <h1>Welcome back, {employerName}!</h1>
           <p>Manage your job listings and applications.</p>
           <div className="welcome-actions">
             <Link to="/employer/jobs/new" className="post-job-btn">+ Post New Job</Link>
@@ -69,15 +142,15 @@ function EmployerDashboard() {
         <div className="dashboard-stats">
           <div className="stat-card">
             <h3>Active Jobs</h3>
-            <p className="stat-number">3</p>
+            <p className="stat-number">{stats.activeJobs}</p>
           </div>
           <div className="stat-card">
             <h3>Total Applicants</h3>
-            <p className="stat-number">25</p>
+            <p className="stat-number">{stats.totalApplicants}</p>
           </div>
           <div className="stat-card">
             <h3>New Applications</h3>
-            <p className="stat-number">8</p>
+            <p className="stat-number">{stats.newApplications}</p>
           </div>
         </div>
 
@@ -89,16 +162,21 @@ function EmployerDashboard() {
           
           {loading ? (
             <p>Loading your job listings...</p>
+          ) : postedJobs.length === 0 ? (
+            <div className="empty-state">
+              <p>You haven't posted any jobs yet.</p>
+              <Link to="/employer/jobs/new" className="btn-primary">Post Your First Job</Link>
+            </div>
           ) : (
             <div className="jobs-list">
-              {postedJobs.map(job => (
+              {postedJobs.slice(0, 3).map(job => (
                 <div key={job.id} className="job-card">
                   <h3>{job.title}</h3>
                   <div className="job-details">
-                    <span><i className="applicants-icon"></i> {job.applicants} Applicants</span>
-                    <span><i className="date-icon"></i> Posted: {new Date(job.postedDate).toLocaleDateString()}</span>
+                    <span><i className="applicants-icon"></i> {job.application_count || 0} Applicants</span>
+                    <span><i className="date-icon"></i> Posted: {formatDate(job.created_at)}</span>
                     <span className={`status status-${job.status.toLowerCase()}`}>
-                      {job.status}
+                      {job.status === 'open' ? 'Active' : job.status}
                     </span>
                   </div>
                   <div className="job-actions">
@@ -121,14 +199,19 @@ function EmployerDashboard() {
           
           {loading ? (
             <p>Loading recent applications...</p>
+          ) : applications.length === 0 ? (
+            <div className="empty-state">
+              <p>You don't have any applications yet.</p>
+              <p>Applications will appear here when people apply to your jobs.</p>
+            </div>
           ) : (
             <div className="applications-list">
-              {applications.map(app => (
+              {applications.slice(0, 3).map(app => (
                 <div key={app.id} className="application-card">
                   <h3>{app.name}</h3>
-                  <p>Applied for: {app.position}</p>
+                  <p>Applied for: {app.job_title}</p>
                   <div className="application-details">
-                    <span>Applied: {new Date(app.appliedDate).toLocaleDateString()}</span>
+                    <span>Applied: {formatDate(app.applied_at)}</span>
                     <span className={`status status-${app.status.toLowerCase().replace(' ', '-')}`}>
                       {app.status}
                     </span>

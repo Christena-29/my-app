@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../services/api'; // Import the API function
 import '../styles/Register.css';
 
 function Register() {
@@ -13,7 +14,7 @@ function Register() {
     // Employee specific fields
     dob: '',
     education: '',
-    skills: '',
+    skills: [],
     experience: 0,
     // Employer specific fields
     companyName: '',
@@ -21,9 +22,11 @@ function Register() {
     latitude: '',
     longitude: ''
   });
+  const [skillInput, setSkillInput] = useState('');
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Calculate minimum date for DOB (18 years ago)
   const getMaxDobDate = () => {
@@ -46,6 +49,31 @@ function Register() {
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
+  };
+
+  const handleAddSkill = () => {
+    if (skillInput.trim()) {
+      // Add skill to the skills array
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, skillInput.trim()]
+      });
+      setSkillInput('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setFormData({
+      ...formData,
+      skills: formData.skills.filter(skill => skill !== skillToRemove)
+    });
   };
 
   const getLocation = () => {
@@ -98,10 +126,6 @@ function Register() {
       newErrors.confirmPassword = "Passwords do not match";
     }
     
-    if (!formData.latitude || !formData.longitude) {
-      newErrors.location = "Location is required";
-    }
-    
     // User type specific validation
     if (userType === 'employee') {
       if (!formData.dob) {
@@ -129,7 +153,7 @@ function Register() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const formErrors = validateForm();
@@ -138,20 +162,64 @@ function Register() {
       return;
     }
     
-    // In a real app, you would submit this data to your backend
-    setLoading(true);
+    // Prepare data for submission
+    const dataToSubmit = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      userType: userType,
+    };
     
-    // Simulate API call with timeout
-    setTimeout(() => {
-      console.log("Form submitted:", {
-        userType,
-        ...formData
-      });
-      setLoading(false);
+    // Add user type specific data
+    if (userType === 'employee') {
+      dataToSubmit.dob = formData.dob;
+      dataToSubmit.education = formData.education;
+      dataToSubmit.skills = formData.skills;
+      dataToSubmit.experience = parseInt(formData.experience, 10);
+      if (formData.latitude && formData.longitude) {
+        dataToSubmit.latitude = parseFloat(formData.latitude);
+        dataToSubmit.longitude = parseFloat(formData.longitude);
+      }
+    } else {
+      dataToSubmit.companyName = formData.companyName;
+      if (formData.latitude && formData.longitude) {
+        dataToSubmit.latitude = parseFloat(formData.latitude);
+        dataToSubmit.longitude = parseFloat(formData.longitude);
+      }
+    }
+    
+    // Submit to backend
+    setLoading(true);
+    try {
+      const response = await registerUser(dataToSubmit);
       
-      // Redirect to the appropriate dashboard
-      navigate(userType === 'employee' ? '/employee/dashboard' : '/employer/dashboard');
-    }, 1500);
+      if (response.status === 'success') {
+        // Show success message
+        setSuccessMessage(`${userType === 'employee' ? 'Employee' : 'Employer'} account created successfully!`);
+        
+        // Alert the user
+        alert(`Account created successfully! You will now be redirected to the dashboard.`);
+        
+        // Redirect to the appropriate dashboard after a short delay
+        setTimeout(() => {
+          navigate(userType === 'employee' ? '/employee/dashboard' : '/employer/dashboard');
+        }, 1000);
+      } else {
+        // Show error from API
+        setErrors({
+          ...errors,
+          submit: response.message || 'Registration failed. Please try again.'
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setErrors({
+        ...errors,
+        submit: 'An unexpected error occurred. Please try again.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -165,16 +233,32 @@ function Register() {
           <p>Join our platform to connect with jobs and talent</p>
         </div>
         
+        {/* Success Message */}
+        {successMessage && (
+          <div className="success-message">
+            {successMessage}
+          </div>
+        )}
+        
+        {/* General Error Message */}
+        {errors.submit && (
+          <div className="error-message submit-error">
+            {errors.submit}
+          </div>
+        )}
+        
         <div className="user-type-selector">
           <button 
             className={`user-type-btn ${userType === 'employee' ? 'active' : ''}`}
             onClick={() => handleUserTypeChange('employee')}
+            type="button"
           >
             Employee
           </button>
           <button 
             className={`user-type-btn ${userType === 'employer' ? 'active' : ''}`}
             onClick={() => handleUserTypeChange('employer')}
+            type="button"
           >
             Employer
           </button>
@@ -284,15 +368,38 @@ function Register() {
               </div>
               
               <div className="form-group">
-                <label htmlFor="skills">Skills (comma separated)</label>
-                <input
-                  type="text"
-                  id="skills"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  placeholder="JavaScript, React, Node.js"
-                />
+                <label>Skills</label>
+                <div className="skills-input-container">
+                  <input
+                    type="text"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Add a skill and press Enter"
+                  />
+                  <button 
+                    type="button" 
+                    className="add-skill-btn"
+                    onClick={handleAddSkill}
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                <div className="skills-list">
+                  {formData.skills.map((skill, index) => (
+                    <div key={index} className="skill-tag">
+                      {skill}
+                      <button 
+                        type="button" 
+                        className="remove-skill-btn"
+                        onClick={() => removeSkill(skill)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
               
               <div className="form-group">
@@ -328,8 +435,7 @@ function Register() {
           )}
           
           <div className="form-section">
-            <h2>Location</h2>
-            
+            <h2>Location (Optional)</h2>
             <div className="location-fields">
               <div className="form-group location-btn-container">
                 <button 

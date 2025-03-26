@@ -1,32 +1,81 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { loginUser } from '../services/api';
 import '../styles/Login.css';
 
 function Login() {
   const navigate = useNavigate();
+  
+  // State for form data and validation
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     userType: 'employee' // Default to employee login
   });
+  
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  // Handle input field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
     });
+    
+    // Clear any existing errors when user makes changes
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real app, you would authenticate the user here
     
-    // For now, just redirect based on user type
-    if (formData.userType === 'employee') {
-      navigate('/employee/dashboard');
-    } else {
-      navigate('/employer/dashboard');
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Call the login API
+      const response = await loginUser({
+        email: formData.email,
+        password: formData.password,
+        userType: formData.userType
+      });
+      
+      if (response && response.status === 'success' && response.token) {
+        // Store token and user info in localStorage
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userId', response.userId);
+        localStorage.setItem('userType', response.userType);
+        localStorage.setItem('userName', response.name || 'User');
+        
+        if (response.userType === 'employer' && response.company_name) {
+          localStorage.setItem('companyName', response.company_name);
+        }
+        
+        // Alert the user
+        alert('Login successful! Redirecting to dashboard.');
+        
+        // Redirect based on user type
+        if (response.userType === 'employee') {
+          navigate('/employee/dashboard');
+        } else {
+          navigate('/employer/dashboard');
+        }
+      } else {
+        setError(response?.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,6 +93,8 @@ function Login() {
         <h1>Welcome Back</h1>
         <p>Sign in to continue to your account</p>
         
+        {error && <div className="error-message">{error}</div>}
+        
         <form onSubmit={handleSubmit} className="login-form">
           <div className="user-type-toggle">
             <label className={formData.userType === 'employee' ? 'active' : ''}>
@@ -54,7 +105,7 @@ function Login() {
                 checked={formData.userType === 'employee'}
                 onChange={handleChange}
               />
-              Job Seeker
+              Employee
             </label>
             <label className={formData.userType === 'employer' ? 'active' : ''}>
               <input
@@ -104,8 +155,12 @@ function Login() {
             </Link>
           </div>
           
-          <button type="submit" className="login-button">
-            Login
+          <button 
+            type="submit" 
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Login'}
           </button>
         </form>
         
