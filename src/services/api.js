@@ -54,6 +54,8 @@ export const registerUser = async (userData) => {
  */
 export const loginUser = async (userData) => {
   try {
+    console.log("Sending login request with data:", userData);
+    
     const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
@@ -66,6 +68,12 @@ export const loginUser = async (userData) => {
     
     // Add logging to see what the API returns
     console.log('Login response:', data);
+    
+    // Make sure userType is correctly set in the returned data
+    if (data.status === 'success') {
+      // Use the userType from the request if the API doesn't return it
+      data.userType = data.userType || userData.userType;
+    }
     
     return data;
   } catch (error) {
