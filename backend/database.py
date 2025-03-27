@@ -55,15 +55,16 @@ def init_db():
         # Create index on employees email
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email)')
         
-        # Create Jobs Table
+        # Create Jobs Table - UPDATED with time_slot field
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS jobs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employer_id INTEGER NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
-            salary REAL,
-            job_type TEXT,
+            salary TEXT,
+            job_type TEXT DEFAULT 'Part-time',
+            time_slot TEXT,
             latitude REAL,  
             longitude REAL,
             status TEXT DEFAULT 'open',
@@ -75,7 +76,7 @@ def init_db():
         # Create index on jobs employer
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer_id)')
         
-        # Create Applications Table
+        # Create Applications Table - UPDATED to ensure cover_letter can be stored properly
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +256,7 @@ def get_employee_by_email(email):
     return None
 
 # Function to create a job listing with detailed response
-def create_job(employer_id, title, description, salary=None, job_type=None, latitude=None, longitude=None):
+def create_job(employer_id, title, description, salary=None, job_type='Part-time', time_slot=None, latitude=None, longitude=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -267,9 +268,9 @@ def create_job(employer_id, title, description, salary=None, job_type=None, lati
         
         cursor.execute(
             '''INSERT INTO jobs 
-               (employer_id, title, description, salary, job_type, latitude, longitude) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (employer_id, title, description, salary, job_type, latitude, longitude)
+               (employer_id, title, description, salary, job_type, time_slot, latitude, longitude) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (employer_id, title, description, salary, job_type, time_slot, latitude, longitude)
         )
         
         job_id = cursor.lastrowid
@@ -352,7 +353,7 @@ def get_job_by_id(job_id):
         conn.close()
 
 # Function to apply for a job with detailed response
-def apply_for_job(job_id, employee_id):
+def apply_for_job(job_id, employee_id, cover_letter=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -378,10 +379,10 @@ def apply_for_job(job_id, employee_id):
         if cursor.fetchone():
             return {"success": False, "error": "You have already applied for this job", "code": "ALREADY_APPLIED"}
         
-        # Insert the application (without cover letter)
+        # Insert the application with cover letter
         cursor.execute(
-            "INSERT INTO applications (job_id, employee_id) VALUES (?, ?)",
-            (job_id, employee_id)
+            "INSERT INTO applications (job_id, employee_id, cover_letter) VALUES (?, ?, ?)",
+            (job_id, employee_id, cover_letter)
         )
         
         application_id = cursor.lastrowid
@@ -521,23 +522,33 @@ def get_employee_applications(employee_id):
         if not cursor.fetchone():
             return {"success": False, "error": "Employee not found", "code": "EMPLOYEE_NOT_FOUND"}
         
+        # Join with jobs table to get job title and time_slot
         cursor.execute('''
-            SELECT * FROM applications
-            WHERE employee_id = ?
-            ORDER BY applied_at DESC
+            SELECT a.*, j.title AS job_title, j.time_slot, e.company_name 
+            FROM applications a
+            JOIN jobs j ON a.job_id = j.id
+            JOIN employers e ON j.employer_id = e.id
+            WHERE a.employee_id = ?
+            ORDER BY a.applied_at DESC
         ''', (employee_id,))
         
         applications = cursor.fetchall()
         
-        return {
-            "success": True, 
-            "applications": [dict(app) for app in applications]
-        }
+        # Convert to list of dictionaries
+        result = []
+        for app in applications:
+            app_dict = dict(app)
+            result.append(app_dict)
+        
+        conn.close()
+        return result
     except Exception as e:
         print(f"Error fetching employee applications: {e}")
-        return {"success": False, "error": str(e), "applications": []}
-    finally:
         conn.close()
+        return []
+    finally:
+        if conn:
+            conn.close()
 
 # Function to add a chat entry for employee questions and answers
 def save_chat_qa(employee_id, question, answer):
