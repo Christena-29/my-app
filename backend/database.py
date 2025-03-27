@@ -55,15 +55,16 @@ def init_db():
         # Create index on employees email
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email)')
         
-        # Create Jobs Table
+        # Create Jobs Table - UPDATED with time_slot field
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS jobs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employer_id INTEGER NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
-            salary REAL,
-            job_type TEXT,
+            salary TEXT,
+            job_type TEXT DEFAULT 'Part-time',
+            time_slot TEXT,
             latitude REAL,  
             longitude REAL,
             status TEXT DEFAULT 'open',
@@ -75,7 +76,7 @@ def init_db():
         # Create index on jobs employer
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer_id)')
         
-        # Create Applications Table
+        # Create Applications Table - UPDATED to ensure cover_letter can be stored properly
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +256,7 @@ def get_employee_by_email(email):
     return None
 
 # Function to create a job listing with detailed response
-def create_job(employer_id, title, description, salary=None, job_type=None, latitude=None, longitude=None):
+def create_job(employer_id, title, description, salary=None, job_type='Part-time', time_slot=None, latitude=None, longitude=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -267,9 +268,9 @@ def create_job(employer_id, title, description, salary=None, job_type=None, lati
         
         cursor.execute(
             '''INSERT INTO jobs 
-               (employer_id, title, description, salary, job_type, latitude, longitude) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (employer_id, title, description, salary, job_type, latitude, longitude)
+               (employer_id, title, description, salary, job_type, time_slot, latitude, longitude) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (employer_id, title, description, salary, job_type, time_slot, latitude, longitude)
         )
         
         job_id = cursor.lastrowid
@@ -352,7 +353,7 @@ def get_job_by_id(job_id):
         conn.close()
 
 # Function to apply for a job with detailed response
-def apply_for_job(job_id, employee_id):
+def apply_for_job(job_id, employee_id, cover_letter=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -378,10 +379,10 @@ def apply_for_job(job_id, employee_id):
         if cursor.fetchone():
             return {"success": False, "error": "You have already applied for this job", "code": "ALREADY_APPLIED"}
         
-        # Insert the application (without cover letter)
+        # Insert the application with cover letter
         cursor.execute(
-            "INSERT INTO applications (job_id, employee_id) VALUES (?, ?)",
-            (job_id, employee_id)
+            "INSERT INTO applications (job_id, employee_id, cover_letter) VALUES (?, ?, ?)",
+            (job_id, employee_id, cover_letter)
         )
         
         application_id = cursor.lastrowid
@@ -521,23 +522,33 @@ def get_employee_applications(employee_id):
         if not cursor.fetchone():
             return {"success": False, "error": "Employee not found", "code": "EMPLOYEE_NOT_FOUND"}
         
+        # Join with jobs table to get job title and time_slot
         cursor.execute('''
-            SELECT * FROM applications
-            WHERE employee_id = ?
-            ORDER BY applied_at DESC
+            SELECT a.*, j.title AS job_title, j.time_slot, e.company_name 
+            FROM applications a
+            JOIN jobs j ON a.job_id = j.id
+            JOIN employers e ON j.employer_id = e.id
+            WHERE a.employee_id = ?
+            ORDER BY a.applied_at DESC
         ''', (employee_id,))
         
         applications = cursor.fetchall()
         
-        return {
-            "success": True, 
-            "applications": [dict(app) for app in applications]
-        }
+        # Convert to list of dictionaries
+        result = []
+        for app in applications:
+            app_dict = dict(app)
+            result.append(app_dict)
+        
+        conn.close()
+        return result
     except Exception as e:
         print(f"Error fetching employee applications: {e}")
-        return {"success": False, "error": str(e), "applications": []}
-    finally:
         conn.close()
+        return []
+    finally:
+        if conn:
+            conn.close()
 
 # Function to add a chat entry for employee questions and answers
 def save_chat_qa(employee_id, question, answer):
@@ -634,6 +645,66 @@ def test_connection():
             "error": str(e),
             "initialized": False
         }
+
+def delete_job(job_id, employer_id):
+    """Delete a job posting and all related applications
+    
+    Args:
+        job_id (int): ID of the job to delete
+        employer_id (int): ID of the employer (for verification)
+        
+    Returns:
+        dict: Result of the operation
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Print debug info
+        print(f"Attempting to delete job {job_id} for employer {employer_id}")
+        
+        # First verify the job exists and belongs to this employer
+        cursor.execute("SELECT employer_id FROM jobs WHERE id = ?", (job_id,))
+        job = cursor.fetchone()
+        
+        if not job:
+            print(f"Job {job_id} not found")
+            return {"success": False, "error": "Job not found", "code": "JOB_NOT_FOUND"}
+        
+        db_employer_id = job['employer_id']
+        print(f"Job belongs to employer: {db_employer_id}, requesting employer: {employer_id}")
+        
+        if int(db_employer_id) != int(employer_id):
+            print(f"Unauthorized: job {job_id} belongs to employer {db_employer_id}, not {employer_id}")
+            return {"success": False, "error": "You don't have permission to delete this job", "code": "UNAUTHORIZED"}
+        
+        # Begin transaction - we'll delete applications first, then the job
+        cursor.execute("BEGIN TRANSACTION")
+        
+        # Delete all applications for this job
+        cursor.execute("DELETE FROM applications WHERE job_id = ?", (job_id,))
+        applications_deleted = cursor.rowcount
+        print(f"Deleted {applications_deleted} applications for job {job_id}")
+        
+        # Delete the job
+        cursor.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+        
+        # Commit the transaction
+        conn.commit()
+        print(f"Successfully deleted job {job_id}")
+        
+        return {
+            "success": True, 
+            "message": "Job and all related applications deleted successfully",
+            "applications_deleted": applications_deleted
+        }
+    except Exception as e:
+        # Roll back on error
+        conn.rollback()
+        print(f"Error deleting job {job_id}: {e}")
+        return {"success": False, "error": str(e), "code": "DB_ERROR"}
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     # Initialize the database when this script is run directly

@@ -137,6 +137,8 @@ export const getNearbyJobs = async (latitude, longitude, radius = 10) => {
  */
 export const createJob = async (jobData) => {
   try {
+    console.log("Creating job with data:", jobData); // Log the job data being sent
+    
     const response = await fetch(`${API_URL}/jobs`, {
       method: 'POST',
       headers: {
@@ -328,5 +330,33 @@ export const getEmployerDetails = async (employerId) => {
   } catch (error) {
     console.error('Error fetching employer details:', error);
     return { status: 'error', message: 'Failed to fetch employer details' };
+  }
+};
+
+/**
+ * Delete a job posting and its associated applications
+ * @param {number} jobId Job ID to delete
+ * @param {number} employerId Employer ID for verification
+ * @returns {Promise<Object>} Delete result
+ */
+export const deleteJob = async (jobId, employerId) => {
+  try {
+    console.log(`Sending delete request for job ${jobId}, employer ${employerId}`);
+    
+    const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ employer_id: employerId }),
+    });
+    
+    const data = await response.json();
+    console.log('Delete response data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    return { status: 'error', message: error.message };
   }
 };
