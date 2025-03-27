@@ -401,17 +401,17 @@ def get_employee_applications(employee_id):
         return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
     
     # Get applications from database
-    result = db.get_employee_applications(employee_id)
+    applications = db.get_employee_applications(employee_id)  # This returns a list, not a dictionary
     
-    if not result['success']:
-        return jsonify({'status': 'error', 'message': result['error']}), 400
+    if not applications:  # Check if the list is empty or None
+        return jsonify({'status': 'success', 'applications': []}), 200
     
     # Enhance application data with job and company information
     enhanced_applications = []
     conn = db.get_db_connection()
     cursor = conn.cursor()
     
-    for app in result['applications']:
+    for app in applications:
         # Get job title and employer info
         cursor.execute('''
             SELECT j.title, e.company_name
@@ -585,6 +585,259 @@ def delete_job_route(job_id):
         'applicationsDeleted': result.get('applications_deleted', 0)
     }), 200
 
+@app.route('/api/employees/<int:employee_id>', methods=['GET'])
+def get_employee_details(employee_id):
+    """Get employee profile details"""
+    # Get employee from database
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get employee details
+        cursor.execute('''
+            SELECT id, name, email, dob, education, skills, experience, 
+                   latitude, longitude, created_at
+            FROM employees 
+            WHERE id = ?
+        ''', (employee_id,))
+        employee = cursor.fetchone()
+        
+        if not employee:
+            return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+        
+        # Convert to dictionary
+        employee_dict = dict(employee)
+        
+        # Parse skills JSON if present
+        if employee_dict.get('skills'):
+            try:
+                employee_dict['skills'] = json.loads(employee_dict['skills'])
+            except:
+                employee_dict['skills'] = []
+        else:
+            employee_dict['skills'] = []
+        
+        return jsonify({
+            'status': 'success',
+            'employee': employee_dict
+        }), 200
+    except Exception as e:
+        print(f"Error fetching employee details: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/employees/<int:employee_id>', methods=['PUT'])
+def update_employee_profile(employee_id):
+    """Update employee profile information"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if employee exists
+        cursor.execute('SELECT id FROM employees WHERE id = ?', (employee_id,))
+        if not cursor.fetchone():
+            return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+        
+        # Fields that can be updated
+        allowed_fields = ['name', 'education', 'experience', 'latitude', 'longitude']
+        
+        # Build update query dynamically
+        update_fields = []
+        update_values = []
+        
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                update_values.append(data[field])
+        
+        # Handle skills separately as it needs to be JSON
+        if 'skills' in data and isinstance(data['skills'], list):
+            update_fields.append("skills = ?")
+            update_values.append(json.dumps(data['skills']))
+        
+        if not update_fields:
+            return jsonify({'status': 'error', 'message': 'No valid fields to update'}), 400
+            
+        # Complete the query parameters
+        update_values.append(employee_id)  # For the WHERE clause
+        
+        # Execute the update query
+        cursor.execute(
+            f"UPDATE employees SET {', '.join(update_fields)} WHERE id = ?", 
+            update_values
+        )
+        
+        conn.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Profile updated successfully'
+        }), 200
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating employee profile: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/employees/<int:employee_id>/password', methods=['PUT'])
+def update_employee_password(employee_id):
+    """Update employee password"""
+    data = request.get_json()
+    
+    if not data or 'currentPassword' not in data or 'newPassword' not in data:
+        return jsonify({
+            'status': 'error', 
+            'message': 'Current password and new password are required'
+        }), 400
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Verify current password
+        cursor.execute('SELECT password_hash FROM employees WHERE id = ?', (employee_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+        
+        stored_password = result['password_hash']
+        
+        # Direct password comparison (not using hashing for this simple app)
+        if stored_password != data['currentPassword']:
+            return jsonify({'status': 'error', 'message': 'Current password is incorrect'}), 401
+        
+        # Update password
+        cursor.execute(
+            'UPDATE employees SET password_hash = ? WHERE id = ?',
+            (data['newPassword'], employee_id)
+        )
+        
+        conn.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Password updated successfully'
+        }), 200
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating employee password: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/employers/<int:employer_id>', methods=['PUT'])
+def update_employer_profile(employer_id):
+    """Update employer profile information"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if employer exists
+        cursor.execute('SELECT id FROM employers WHERE id = ?', (employer_id,))
+        if not cursor.fetchone():
+            return jsonify({'status': 'error', 'message': 'Employer not found'}), 404
+        
+        # Fields that can be updated
+        allowed_fields = ['name', 'company_name', 'latitude', 'longitude']
+        
+        # Build update query dynamically
+        update_fields = []
+        update_values = []
+        
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                update_values.append(data[field])
+        
+        if not update_fields:
+            return jsonify({'status': 'error', 'message': 'No valid fields to update'}), 400
+            
+        # Complete the query parameters
+        update_values.append(employer_id)  # For the WHERE clause
+        
+        # Execute the update query
+        cursor.execute(
+            f"UPDATE employers SET {', '.join(update_fields)} WHERE id = ?", 
+            update_values
+        )
+        
+        conn.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Profile updated successfully'
+        }), 200
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating employer profile: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/employers/<int:employer_id>/password', methods=['PUT'])
+def update_employer_password(employer_id):
+    """Update employer password"""
+    data = request.get_json()
+    
+    if not data or 'currentPassword' not in data or 'newPassword' not in data:
+        return jsonify({
+            'status': 'error', 
+            'message': 'Current password and new password are required'
+        }), 400
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Verify current password
+        cursor.execute('SELECT password_hash FROM employers WHERE id = ?', (employer_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'status': 'error', 'message': 'Employer not found'}), 404
+        
+        stored_password = result['password_hash']
+        
+        # Direct password comparison (not using hashing for this simple app)
+        if stored_password != data['currentPassword']:
+            return jsonify({'status': 'error', 'message': 'Current password is incorrect'}), 401
+        
+        # Update password
+        cursor.execute(
+            'UPDATE employers SET password_hash = ? WHERE id = ?',
+            (data['newPassword'], employer_id)
+        )
+        
+        conn.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Password updated successfully'
+        }), 200
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating employer password: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
 # Run the application
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
@@ -632,5 +885,40 @@ def update_application_status(application_id, new_status):
         conn.rollback()
         print(f"Error updating application status: {e}")
         return {"success": False, "error": str(e), "code": "DB_ERROR"}
+    finally:
+        conn.close()
+
+def get_employee_applications(employee_id):
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if the employee exists
+        cursor.execute("SELECT id FROM employees WHERE id = ?", (employee_id,))
+        if not cursor.fetchone():
+            return []
+        
+        # Join with jobs table to get job title and time_slot
+        cursor.execute('''
+            SELECT a.*, j.title AS job_title, j.time_slot, e.company_name 
+            FROM applications a
+            JOIN jobs j ON a.job_id = j.id
+            JOIN employers e ON j.employer_id = e.id
+            WHERE a.employee_id = ?
+            ORDER BY a.applied_at DESC
+        ''', (employee_id,))
+        
+        applications = cursor.fetchall()
+        
+        # Convert to list of dictionaries
+        result = []
+        for app in applications:
+            app_dict = dict(app)
+            result.append(app_dict)
+        
+        return result
+    except Exception as e:
+        print(f"Error fetching employee applications: {e}")
+        return []
     finally:
         conn.close()

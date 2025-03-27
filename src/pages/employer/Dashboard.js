@@ -170,15 +170,17 @@ function EmployerDashboard() {
             <img src="/logo.png" alt="Job Portal Logo" />
           </Link>
           
-          <div className="header-nav">
-            <Link to="/employer/jobs" className="nav-link">My Jobs</Link>
-            <Link to="/employer/applications" className="nav-link">Applications</Link>
-            <Link to="/employer/profile" className="nav-link">Company Profile</Link>
-            <Link to="/employer/nearby-talent" className="nav-link nearby-jobs-link">
-              <i className="location-pin-icon"></i> Nearby Talent
-            </Link>
-          </div>
-          
+        
+
+        <div className="header-nav">
+          <Link to="/employer/jobs" className="nav-link">My Jobs</Link>
+          <Link to="/employer/applications" className="nav-link">Applications</Link>
+          <Link to="/employer/profile" className="nav-link">Profile</Link>
+          <Link to="/employer/nearby-talent" className="nav-link nearby-jobs-link">
+            <i className="location-pin-icon"></i> Nearby Talent
+          </Link>
+      </div>
+                    
           <div className="user-profile">
             <div className="user-avatar">{getInitials(employerName)}</div>
             <div className="user-menu-dropdown">
