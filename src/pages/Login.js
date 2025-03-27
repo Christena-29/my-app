@@ -39,14 +39,22 @@ function Login() {
     }
     
     setLoading(true);
+    setError(''); // Clear any previous errors
     
     try {
+      console.log("Attempting login with:", { 
+        email: formData.email, 
+        userType: formData.userType 
+      });
+      
       // Call the login API
       const response = await loginUser({
         email: formData.email,
         password: formData.password,
         userType: formData.userType
       });
+      
+      console.log("Login response:", response);
       
       if (response && response.status === 'success' && response.token) {
         // Store token and user info in localStorage
@@ -55,8 +63,8 @@ function Login() {
         localStorage.setItem('userType', response.userType);
         localStorage.setItem('userName', response.name || 'User');
         
-        if (response.userType === 'employer' && response.company_name) {
-          localStorage.setItem('companyName', response.company_name);
+        if (response.userType === 'employer' && response.companyName) {
+          localStorage.setItem('companyName', response.companyName);
         }
         
         // Alert the user
@@ -65,15 +73,15 @@ function Login() {
         // Redirect based on user type
         if (response.userType === 'employee') {
           navigate('/employee/dashboard');
-        } else {
+        } else if (response.userType === 'employer') {
           navigate('/employer/dashboard');
         }
       } else {
         setError(response?.message || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

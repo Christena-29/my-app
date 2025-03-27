@@ -67,8 +67,8 @@ def register():
     if missing_fields:
         return jsonify({'status': 'error', 'message': f'Missing fields: {", ".join(missing_fields)}'}), 400
     
-    # Hash the password
-    password_hash = generate_password_hash(data['password'])
+    # Store password directly without hashing
+    password = data['password']
     
     if data['userType'] == 'employer':
         # Additional required fields for employer
@@ -78,7 +78,7 @@ def register():
         result = db.register_employer(
             data['name'],
             data['email'],
-            password_hash,
+            password,  # Use password directly
             data['companyName'],
             data.get('latitude'),
             data.get('longitude')
@@ -100,7 +100,7 @@ def register():
         result = db.register_employee(
             data['name'],
             data['email'],
-            password_hash,
+            password,  # Use password directly
             data['dob'],
             data['education'],
             skills,
@@ -138,69 +138,54 @@ def login():
     # Get user based on user type
     user = None
     if data['userType'] == 'employer':
-        # First we need to get the employer by email to get their stored password hash
-        conn = db.get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM employers WHERE email = ?', (data['email'],))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if not user:
-            return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
-        
-        # Check password
-        if check_password_hash(user['password_hash'], data['password']):
-            # Create JWT token
-            token = create_token(user['id'], 'employer')
-            
-            return jsonify({
-                'status': 'success',
-                'message': 'Login successful',
-                'token': token,
-                'userId': user['id'],
-                'userType': 'employer',
-                'name': user['name'],
-                'companyName': user['company_name']
-            }), 200
+        user = db.get_employer_by_email(data['email'])
     elif data['userType'] == 'employee':
-        # First we need to get the employee by email to get their stored password hash
-        conn = db.get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM employees WHERE email = ?', (data['email'],))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if not user:
-            return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
-        
-        # Check password
-        if check_password_hash(user['password_hash'], data['password']):
-            # Create JWT token
-            token = create_token(user['id'], 'employee')
-            
-            # Parse skills from JSON string
-            skills = []
-            if user['skills']:
-                try:
-                    skills = json.loads(user['skills'])
-                except json.JSONDecodeError:
-                    pass
-            
-            return jsonify({
-                'status': 'success',
-                'message': 'Login successful',
-                'token': token,
-                'userId': user['id'],
-                'userType': 'employee',
-                'name': user['name'],
-                'education': user['education'],
-                'skills': skills
-            }), 200
+        user = db.get_employee_by_email(data['email'])
     else:
         return jsonify({'status': 'error', 'message': 'Invalid user type'}), 400
     
-    # If we get here, authentication failed
-    return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
+    # Debug output
+    print(f"User found: {user is not None}")
+    
+    # Check if user exists
+    if not user:
+        return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
+    
+    # Simple direct password verification (without hashing)
+    # This is NOT secure for production but will work for development across systems
+    if user['password_hash'] != data['password']:
+        print("Password verification failed")
+        return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
+    
+    # If we get here, authentication succeeded
+    print("Password verification successful")
+    
+    # Generate token
+    token = create_token(user['id'], data['userType'])
+    
+    # Build response data
+    response_data = {
+        'status': 'success',
+        'message': 'Login successful',
+        'token': token,
+        'userId': user['id'],
+        'userType': data['userType'],
+        'name': user['name'],
+    }
+    
+    # Add user type specific data
+    if data['userType'] == 'employer' and 'company_name' in user:
+        response_data['companyName'] = user['company_name']
+    elif data['userType'] == 'employee':
+        if 'skills' in user and user['skills']:
+            try:
+                response_data['skills'] = json.loads(user['skills'])
+            except:
+                response_data['skills'] = []
+        if 'education' in user:
+            response_data['education'] = user['education']
+    
+    return jsonify(response_data), 200
 
 @app.route('/api/employer/login', methods=['POST'])
 def employer_login():
@@ -219,8 +204,8 @@ def employer_login():
     if not employer:
         return jsonify({'status': 'error', 'message': 'Invalid email or password'}), 401
     
-    # Verify password
-    if not check_password_hash(employer['password_hash'], password):
+    # Direct password verification
+    if employer['password_hash'] != password:
         return jsonify({'status': 'error', 'message': 'Invalid email or password'}), 401
     
     # Generate token
@@ -462,6 +447,25 @@ def update_application_status_route(application_id):
     if new_status not in ['waiting', 'accepted', 'rejected']:
         return jsonify({'status': 'error', 'message': 'Invalid status. Must be: waiting, accepted, or rejected'}), 400
     
+    # Get current application status
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT status FROM applications WHERE id = ?', (application_id,))
+    application = cursor.fetchone()
+    conn.close()
+    
+    if not application:
+        return jsonify({'status': 'error', 'message': 'Application not found'}), 404
+    
+    current_status = application['status']
+    
+    # If application is already accepted or rejected, prevent status change
+    if current_status in ['accepted', 'rejected']:
+        return jsonify({
+            'status': 'error', 
+            'message': f'Cannot change status of an application that has already been {current_status}'
+        }), 400
+    
     result = db.update_application_status(application_id, new_status)
     
     if not result['success']:
@@ -557,13 +561,24 @@ def update_application_status(application_id, new_status):
     cursor = conn.cursor()
     
     try:
-        # Check if application exists
-        cursor.execute('SELECT id FROM applications WHERE id = ?', (application_id,))
-        if not cursor.fetchone():
+        # Check if application exists and get its current status
+        cursor.execute('SELECT id, status FROM applications WHERE id = ?', (application_id,))
+        application = cursor.fetchone()
+        
+        if not application:
             return {
                 "success": False, 
                 "error": "Application not found", 
                 "code": "APPLICATION_NOT_FOUND"
+            }
+        
+        # If application is already accepted or rejected, prevent status change
+        current_status = application['status']
+        if current_status in ['accepted', 'rejected']:
+            return {
+                "success": False,
+                "error": f"Cannot change status of an application that has already been {current_status}",
+                "code": "STATUS_LOCKED"
             }
         
         # Update the application status
@@ -584,4 +599,4 @@ def update_application_status(application_id, new_status):
         print(f"Error updating application status: {e}")
         return {"success": False, "error": str(e), "code": "DB_ERROR"}
     finally:
-        conn.close()
+        conn

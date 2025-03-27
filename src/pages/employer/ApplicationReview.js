@@ -196,25 +196,37 @@ function ApplicationReview() {
                 <button 
                   onClick={() => handleStatusChange('accepted')} 
                   className="accept-button"
-                  disabled={updating || application.status === 'accepted'}
+                  disabled={updating || application.status === 'accepted' || application.status === 'rejected'}
+                  title={application.status === 'rejected' ? "Cannot change status after rejection" : ""}
                 >
                   {updating && newStatus === 'accepted' ? "Processing..." : "Accept Application"}
                 </button>
                 <button 
                   onClick={() => handleStatusChange('rejected')} 
                   className="reject-button"
-                  disabled={updating || application.status === 'rejected'}
+                  disabled={updating || application.status === 'rejected' || application.status === 'accepted'}
+                  title={application.status === 'accepted' ? "Cannot change status after acceptance" : ""}
                 >
                   {updating && newStatus === 'rejected' ? "Processing..." : "Reject Application"}
                 </button>
                 <button 
                   onClick={() => handleStatusChange('waiting')} 
                   className="reset-button"
-                  disabled={updating || application.status === 'waiting'}
+                  disabled={updating || application.status === 'waiting' || 
+                            application.status === 'accepted' || application.status === 'rejected'}
+                  title={application.status === 'accepted' || application.status === 'rejected' ? 
+                        "Cannot change status after final decision" : ""}
                 >
                   {updating && newStatus === 'waiting' ? "Processing..." : "Mark as Pending"}
                 </button>
               </div>
+              
+              {(application.status === 'accepted' || application.status === 'rejected') && (
+                <div className="status-locked-message">
+                  <i className="info-icon"></i>
+                  <span>This application status has been finalized and cannot be changed.</span>
+                </div>
+              )}
             </div>
             
             <div className="navigation-footer">
