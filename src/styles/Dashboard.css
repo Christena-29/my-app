@@ -275,6 +275,8 @@
 
 .job-actions {
   display: flex;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 @media (max-width: 768px) {
@@ -487,4 +489,82 @@
 
 .date-icon {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23666"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>');
+}
+
+.time-slot-badge {
+  background-color: #f0f4ff;
+  color: #4a6bff;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.time-icon::before {
+  content: "\f017"; /* FontAwesome clock icon */
+  font-family: "FontAwesome";
+  margin-right: 5px;
+}
+
+.job-time-slot {
+  color: #ff9800;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-controls {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* Add this to your src/styles/Dashboard.css file */
+
+.delete-job-btn {
+  padding: 8px 16px;
+  background-color: #f5222d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.delete-job-btn:hover {
+  background-color: #cf1322;
+}
+
+.job-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
 }

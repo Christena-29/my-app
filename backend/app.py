@@ -551,6 +551,37 @@ def get_employer_details(employer_id):
     finally:
         conn.close()
 
+@app.route('/api/jobs/<int:job_id>', methods=['DELETE'])
+def delete_job_route(job_id):
+    """Delete a job and all its applications"""
+    # Get employer ID from request
+    data = request.get_json()
+    
+    if not data or 'employer_id' not in data:
+        return jsonify({'status': 'error', 'message': 'Employer ID is required'}), 400
+    
+    employer_id = data['employer_id']
+    
+    # Debug info
+    print(f"Deleting job {job_id} for employer {employer_id}")
+    
+    # Call the database function
+    result = db.delete_job(job_id, employer_id)
+    
+    if not result['success']:
+        # Handle different error cases
+        if result.get('code') == 'UNAUTHORIZED':
+            return jsonify({'status': 'error', 'message': result['error']}), 403
+        elif result.get('code') == 'JOB_NOT_FOUND':
+            return jsonify({'status': 'error', 'message': result['error']}), 404
+        return jsonify({'status': 'error', 'message': result['error']}), 400
+    
+    return jsonify({
+        'status': 'success',
+        'message': result['message'],
+        'applicationsDeleted': result.get('applications_deleted', 0)
+    }), 200
+
 # Run the application
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
@@ -599,4 +630,4 @@ def update_application_status(application_id, new_status):
         print(f"Error updating application status: {e}")
         return {"success": False, "error": str(e), "code": "DB_ERROR"}
     finally:
-        conn
+        conn.close()

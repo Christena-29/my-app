@@ -128,7 +128,8 @@ function JobDetails() {
               <div className="job-company">{job.company_name}</div>
               <div className="job-meta">
                 <span className="job-date">Posted: {formatDate(job.created_at)}</span>
-                <span className="job-type">{job.job_type || 'Not specified'}</span>
+                <span className="job-type">Part-time</span>
+                <span className="job-time-slot">{job.time_slot} Shift</span>
                 <span className="job-salary">{formatSalary(job.salary)}</span>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getEmployerJobs, getEmployerApplications, getEmployerDetails } from '../../services/api';
+import { getEmployerJobs, getEmployerApplications, getEmployerDetails, deleteJob } from '../../services/api';
 import '../../styles/Dashboard.css';
 
 function EmployerDashboard() {
@@ -13,6 +13,10 @@ function EmployerDashboard() {
     activeJobs: 0,
     totalApplicants: 0,
     newApplications: 0
+  });
+  const [filters, setFilters] = useState({
+    timeSlot: 'all',
+    salary: 'all'
   });
   
   // Get employer information from localStorage
@@ -100,6 +104,64 @@ function EmployerDashboard() {
     navigate('/login');
   };
 
+  // Filter jobs based on selected filters
+  const filteredJobs = postedJobs.filter(job => {
+    // Time slot filter
+    if (filters.timeSlot !== 'all' && job.time_slot !== filters.timeSlot) {
+      return false;
+    }
+    
+    // Salary filter logic would go here
+    
+    return true;
+  });
+
+  // Check if user has already applied to a job (only needed for employee dashboard)
+  const hasApplied = (jobId) => {
+    // For employer dashboard, this function is only needed for the copied code from employee dashboard
+    // We can return false since employers don't apply to jobs
+    return false;
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (window.confirm('Are you sure you want to delete this job posting? All related applications will also be deleted.')) {
+      try {
+        // Show some loading state
+        setLoading(true);
+
+        console.log(`Deleting job ${jobId} for employer ${employerId}`);
+        const response = await deleteJob(jobId, parseInt(employerId));
+        
+        console.log('Delete response:', response);
+        
+        if (response && response.status === 'success') {
+          // Remove the job from the local state
+          setPostedJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+          
+          // Update applications list by removing applications for the deleted job
+          setApplications(prevApps => prevApps.filter(app => app.job_id !== jobId));
+          
+          // Update stats
+          setStats(prevStats => ({
+            ...prevStats,
+            activeJobs: prevStats.activeJobs - 1,
+            totalApplicants: Math.max(0, prevStats.totalApplicants - (response.applicationsDeleted || 0)),
+            newApplications: Math.max(0, prevStats.newApplications - (response.applicationsDeleted || 0))
+          }));
+          
+          alert(`Job and ${response.applicationsDeleted || 0} related applications have been deleted.`);
+        } else {
+          alert(`Error: ${response.message || 'Could not delete the job'}`);
+        }
+      } catch (error) {
+        console.error('Error deleting job:', error);
+        alert('An unexpected error occurred while deleting the job.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
@@ -160,30 +222,57 @@ function EmployerDashboard() {
             <Link to="/employer/jobs" className="view-all">View All</Link>
           </div>
           
+          <div className="filter-controls">
+            <div className="filter-group">
+              <label htmlFor="time-filter">Time Slot:</label>
+              <select 
+                id="time-filter" 
+                value={filters.timeSlot}
+                onChange={(e) => setFilters({...filters, timeSlot: e.target.value})}
+              >
+                <option value="all">All Shifts</option>
+                <option value="Morning">Morning</option>
+                <option value="Evening">Evening</option>
+                <option value="Weekend">Weekend</option>
+              </select>
+            </div>
+          </div>
+
           {loading ? (
             <p>Loading your job listings...</p>
-          ) : postedJobs.length === 0 ? (
+          ) : filteredJobs.length === 0 ? (
             <div className="empty-state">
               <p>You haven't posted any jobs yet.</p>
               <Link to="/employer/jobs/new" className="btn-primary">Post Your First Job</Link>
             </div>
           ) : (
             <div className="jobs-list">
-              {postedJobs.slice(0, 3).map(job => (
+              {filteredJobs.slice(0, 3).map(job => (
                 <div key={job.id} className="job-card">
                   <h3>{job.title}</h3>
+                  <p className="company-name">{job.company_name || companyName}</p>
                   <div className="job-details">
-                    <span><i className="applicants-icon"></i> {job.application_count || 0} Applicants</span>
-                    <span><i className="date-icon"></i> Posted: {formatDate(job.created_at)}</span>
-                    <span className={`status status-${job.status.toLowerCase()}`}>
-                      {job.status === 'open' ? 'Active' : job.status}
+                    <span className="time-slot-badge">
+                      <i className="time-icon"></i> {job.time_slot || 'Not specified'} Shift
                     </span>
+                    <span><i className="salary-icon"></i> {job.salary || 'Not specified'}</span>
+                    <span><i className="date-icon"></i> Posted: {formatDate(job.created_at)}</span>
+                  </div>
+                  <div className="job-description-preview">
+                    {job.description && job.description.length > 150 
+                      ? `${job.description.substring(0, 150)}...` 
+                      : job.description || 'No description provided'}
                   </div>
                   <div className="job-actions">
                     <Link to={`/employer/jobs/${job.id}`} className="view-job-btn">
                       View Details
                     </Link>
-                    <button className="edit-job-btn">Edit</button>
+                    <button 
+                      onClick={() => handleDeleteJob(job.id)} 
+                      className="delete-job-btn"
+                    >
+                      Delete Job
+                    </button>
                   </div>
                 </div>
               ))}

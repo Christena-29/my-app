@@ -635,6 +635,66 @@ def test_connection():
             "initialized": False
         }
 
+def delete_job(job_id, employer_id):
+    """Delete a job posting and all related applications
+    
+    Args:
+        job_id (int): ID of the job to delete
+        employer_id (int): ID of the employer (for verification)
+        
+    Returns:
+        dict: Result of the operation
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Print debug info
+        print(f"Attempting to delete job {job_id} for employer {employer_id}")
+        
+        # First verify the job exists and belongs to this employer
+        cursor.execute("SELECT employer_id FROM jobs WHERE id = ?", (job_id,))
+        job = cursor.fetchone()
+        
+        if not job:
+            print(f"Job {job_id} not found")
+            return {"success": False, "error": "Job not found", "code": "JOB_NOT_FOUND"}
+        
+        db_employer_id = job['employer_id']
+        print(f"Job belongs to employer: {db_employer_id}, requesting employer: {employer_id}")
+        
+        if int(db_employer_id) != int(employer_id):
+            print(f"Unauthorized: job {job_id} belongs to employer {db_employer_id}, not {employer_id}")
+            return {"success": False, "error": "You don't have permission to delete this job", "code": "UNAUTHORIZED"}
+        
+        # Begin transaction - we'll delete applications first, then the job
+        cursor.execute("BEGIN TRANSACTION")
+        
+        # Delete all applications for this job
+        cursor.execute("DELETE FROM applications WHERE job_id = ?", (job_id,))
+        applications_deleted = cursor.rowcount
+        print(f"Deleted {applications_deleted} applications for job {job_id}")
+        
+        # Delete the job
+        cursor.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+        
+        # Commit the transaction
+        conn.commit()
+        print(f"Successfully deleted job {job_id}")
+        
+        return {
+            "success": True, 
+            "message": "Job and all related applications deleted successfully",
+            "applications_deleted": applications_deleted
+        }
+    except Exception as e:
+        # Roll back on error
+        conn.rollback()
+        print(f"Error deleting job {job_id}: {e}")
+        return {"success": False, "error": str(e), "code": "DB_ERROR"}
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     # Initialize the database when this script is run directly
     result = init_db()

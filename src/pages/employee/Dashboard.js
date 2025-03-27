@@ -15,6 +15,10 @@ function EmployeeDashboard() {
     acceptedApplications: 0,
     rejectedApplications: 0
   });
+  const [filters, setFilters] = useState({
+    timeSlot: 'all',
+    salary: 'all'
+  });
   
   // Get employee information from localStorage
   const employeeId = localStorage.getItem('userId');
@@ -107,6 +111,18 @@ function EmployeeDashboard() {
     return Array.isArray(applications) && applications.some(app => app.job_id === jobId);
   };
 
+  // Filter jobs based on selected filters
+  const filteredJobs = jobs.filter(job => {
+    // Time slot filter
+    if (filters.timeSlot !== 'all' && job.time_slot !== filters.timeSlot) {
+      return false;
+    }
+    
+    // Salary filter could be added here in the future
+    
+    return true;
+  });
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
@@ -198,23 +214,43 @@ function EmployeeDashboard() {
             <h2>Available Jobs</h2>
           </div>
           
+          <div className="filter-controls">
+            <div className="filter-group">
+              <label htmlFor="time-filter">Time Slot:</label>
+              <select 
+                id="time-filter" 
+                value={filters.timeSlot}
+                onChange={(e) => setFilters({...filters, timeSlot: e.target.value})}
+              >
+                <option value="all">All Shifts</option>
+                <option value="Morning">Morning</option>
+                <option value="Evening">Evening</option>
+                <option value="Weekend">Weekend</option>
+              </select>
+            </div>
+          </div>
+          
           {jobsLoading ? (
             <div className="loading-indicator">
               <p>Finding jobs for you...</p>
             </div>
-          ) : !jobs || jobs.length === 0 ? (
+          ) : !filteredJobs || filteredJobs.length === 0 ? (
             <div className="empty-state">
               <p>No job listings available at the moment.</p>
               <p>Check back soon for new opportunities!</p>
             </div>
           ) : (
             <div className="jobs-list full-width">
-              {jobs.map(job => (
+              {filteredJobs.map(job => (
                 <div key={job.id} className="job-card">
                   <h3>{job.title}</h3>
                   <p className="company-name">{job.company_name || 'Company'}</p>
                   <div className="job-details">
-                    <span><i className="job-type-icon"></i> {job.job_type || 'Not specified'}</span>
+                    {job.time_slot && (
+                      <span className="time-slot-badge">
+                        <i className="time-icon"></i> {job.time_slot} Shift
+                      </span>
+                    )}
                     <span><i className="salary-icon"></i> {job.salary || 'Not specified'}</span>
                     <span><i className="date-icon"></i> Posted: {formatDate(job.created_at)}</span>
                   </div>

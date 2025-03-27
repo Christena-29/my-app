@@ -9,7 +9,7 @@ function PostJob() {
     title: '',
     description: '',
     salary: '',
-    job_type: '',
+    time_slot: '', // Time slot is now a primary field
     latitude: '',
     longitude: ''
   });
@@ -71,17 +71,22 @@ function PostJob() {
       setError("Job description is required");
       return;
     }
+    if (!formData.time_slot) {
+      setError("Time slot is required for part-time jobs");
+      return;
+    }
 
     setLoading(true);
     setError('');
     
-    // Prepare data for API
+    // Prepare data for API - always set job_type as Part-time
     const jobData = {
       employer_id: parseInt(employer_id),
       title: formData.title,
       description: formData.description,
       salary: formData.salary || null,
-      job_type: formData.job_type || null
+      job_type: 'Part-time', // Always set to Part-time
+      time_slot: formData.time_slot // Include time slot
     };
 
     // Add location if provided
@@ -99,7 +104,7 @@ function PostJob() {
           title: '',
           description: '',
           salary: '',
-          job_type: '',
+          time_slot: '', // Reset time slot field
           latitude: '',
           longitude: ''
         });
@@ -169,19 +174,18 @@ function PostJob() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="job_type">Job Type</label>
+                  <label htmlFor="time_slot">Time Slot</label>
                   <select
-                    id="job_type"
-                    name="job_type"
-                    value={formData.job_type}
+                    id="time_slot"
+                    name="time_slot"
+                    value={formData.time_slot}
                     onChange={handleChange}
+                    required
                   >
-                    <option value="">Select Job Type</option>
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Freelance">Freelance</option>
-                    <option value="Internship">Internship</option>
+                    <option value="">Select Time Slot</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Weekend">Weekend</option>
                   </select>
                 </div>
                 
