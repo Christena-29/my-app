@@ -10,7 +10,9 @@ import NearbyJobsMap from './pages/NearbyJobsMap';
 import PostJob from './pages/employer/PostJob';
 import JobDetails from './pages/employee/JobDetails';
 import ApplicationReview from './pages/employer/ApplicationReview';
-import EmployeeApplications from './pages/employee/Applications'; // Add this import
+import EmployeeApplications from './pages/employee/Applications';
+import EmployeeProfile from './pages/employee/Profile';
+import EmployerProfile from './pages/employer/Profile';
 import { testBackendConnection } from './services/api';
 
 function App() {
@@ -53,17 +55,19 @@ function App() {
           {/* Employee Routes */}
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/jobs/:jobId" element={<JobDetails />} />
-          <Route path="/employee/applications" element={<EmployeeApplications />} /> {/* Add this route */}
+          <Route path="/employee/applications" element={<EmployeeApplications />} />
+          <Route path="/employee/profile" element={<EmployeeProfile />} />
           <Route path="/employee/nearby-jobs" element={<NearbyJobsMap />} />
           
           {/* Employer Routes */}
           <Route path="/employer/dashboard" element={<EmployerDashboard />} />
           <Route path="/employer/jobs/new" element={<PostJob />} />
           <Route path="/employer/applications/:applicationId" element={<ApplicationReview />} />
+          <Route path="/employer/profile" element={<EmployerProfile />} />
           <Route path="/employer/nearby-talent" element={<NearbyJobsMap />} />
           
           {/* Catch-all Route */}
-          <Route path="*" element={<Navigate to="/" replace />} /> {/* Update this route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>

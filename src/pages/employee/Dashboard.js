@@ -131,8 +131,9 @@ function EmployeeDashboard() {
             <img src="/logo.png" alt="Job Portal Logo" />
           </Link>
           
+          
           <div className="header-nav">
-            <Link to="/employee/jobs" className="nav-link">Find Jobs</Link>
+            <Link to="/employee/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/employee/applications" className="nav-link">My Applications</Link>
             <Link to="/employee/profile" className="nav-link">Profile</Link>
             <Link to="/employee/nearby-jobs" className="nav-link nearby-jobs-link">

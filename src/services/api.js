@@ -360,3 +360,111 @@ export const deleteJob = async (jobId, employerId) => {
     return { status: 'error', message: error.message };
   }
 };
+
+/**
+ * Get employer profile
+ * @param {string} employerId 
+ * @returns {Promise} The employer profile data
+ */
+export const getEmployerProfile = async (employerId) => {
+  try {
+    const response = await fetch(`${API_URL}/employers/${employerId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching employer profile:', error);
+    return { status: 'error', message: 'Failed to fetch profile' };
+  }
+};
+
+/**
+ * Update employer profile
+ * @param {string} employerId 
+ * @param {Object} profileData 
+ * @returns {Promise} Result of the update operation
+ */
+export const updateEmployerProfile = async (employerId, profileData) => {
+  try {
+    const response = await fetch(`${API_URL}/employers/${employerId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(profileData)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating employer profile:', error);
+    return { status: 'error', message: 'Failed to update profile' };
+  }
+};
+
+/**
+ * Get employee profile
+ * @param {string} employeeId 
+ * @returns {Promise} The employee profile data
+ */
+export const getEmployeeProfile = async (employeeId) => {
+  try {
+    const response = await fetch(`${API_URL}/employees/${employeeId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching employee profile:', error);
+    return { status: 'error', message: 'Failed to fetch profile' };
+  }
+};
+
+/**
+ * Update employee profile
+ * @param {string} employeeId 
+ * @param {Object} profileData 
+ * @returns {Promise} Result of the update operation
+ */
+export const updateEmployeeProfile = async (employeeId, profileData) => {
+  try {
+    const response = await fetch(`${API_URL}/employees/${employeeId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(profileData)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating employee profile:', error);
+    return { status: 'error', message: 'Failed to update profile' };
+  }
+};
+
+/**
+ * Update user password
+ * @param {string} userId 
+ * @param {string} userType - 'employee' or 'employer' 
+ * @param {Object} passwordData - {currentPassword, newPassword}
+ * @returns {Promise} Result of the password update
+ */
+export const updatePassword = async (userId, userType, passwordData) => {
+  try {
+    const response = await fetch(`${API_URL}/${userType}s/${userId}/password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(passwordData)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating password:', error);
+    return { status: 'error', message: 'Failed to update password' };
+  }
+};
