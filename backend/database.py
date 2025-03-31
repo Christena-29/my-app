@@ -18,7 +18,7 @@ def init_db():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Create Employers Table
+        # Create Employers Table (removing latitude and longitude columns)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS employers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,8 +26,6 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             company_name TEXT NOT NULL,
-            latitude REAL,
-            longitude REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
@@ -129,8 +127,8 @@ def is_at_least_18(dob_str):
     except ValueError:
         return False
 
-# Function to register an employer with detailed response
-def register_employer(name, email, password_hash, company_name, latitude=None, longitude=None):
+# Modify the register_employer function to make latitude and longitude truly optional
+def register_employer(name, email, password_hash, company_name):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -140,9 +138,10 @@ def register_employer(name, email, password_hash, company_name, latitude=None, l
         if cursor.fetchone():
             return {"success": False, "error": "Email already registered", "code": "EMAIL_EXISTS"}
         
+        # Remove location parameters completely
         cursor.execute(
-            "INSERT INTO employers (name, email, password_hash, company_name, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)",
-            (name, email, password_hash, company_name, latitude, longitude)
+            "INSERT INTO employers (name, email, password_hash, company_name) VALUES (?, ?, ?, ?)",
+            (name, email, password_hash, company_name)
         )
         
         employer_id = cursor.lastrowid

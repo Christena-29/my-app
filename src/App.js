@@ -64,7 +64,7 @@ function App() {
           <Route path="/employer/jobs/new" element={<PostJob />} />
           <Route path="/employer/applications/:applicationId" element={<ApplicationReview />} />
           <Route path="/employer/profile" element={<EmployerProfile />} />
-          <Route path="/employer/nearby-talent" element={<NearbyJobsMap />} />
+          <Route path="/employer/nearby-talent" element={<Navigate to="/employer/dashboard" replace />} />
           
           {/* Catch-all Route */}
           <Route path="*" element={<Navigate to="/" replace />} />

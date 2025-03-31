@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api'; // Import the API function
+import { getAllLocations, getResidentialLocations, getBusinessLocations } from '../utils/locations';
 import '../styles/Register.css';
 
 function Register() {
@@ -27,6 +28,18 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [selectedLocationId, setSelectedLocationId] = useState('');
+
+  useEffect(() => {
+    // Set the appropriate locations based on user type
+    if (userType === 'employee') {
+      setAvailableLocations(getResidentialLocations());
+    } else {
+      // Employers can select from all locations
+      setAvailableLocations(getAllLocations());
+    }
+  }, [userType]);
 
   // Calculate minimum date for DOB (18 years ago)
   const getMaxDobDate = () => {
@@ -181,11 +194,9 @@ function Register() {
         dataToSubmit.longitude = parseFloat(formData.longitude);
       }
     } else {
+      // Only add company name for employers - no location
       dataToSubmit.companyName = formData.companyName;
-      if (formData.latitude && formData.longitude) {
-        dataToSubmit.latitude = parseFloat(formData.latitude);
-        dataToSubmit.longitude = parseFloat(formData.longitude);
-      }
+      // Location data for employers completely removed
     }
     
     // Submit to backend
@@ -434,48 +445,81 @@ function Register() {
             </div>
           )}
           
-          <div className="form-section">
-            <h2>Location (Optional)</h2>
-            <div className="location-fields">
-              <div className="form-group location-btn-container">
-                <button 
-                  type="button" 
-                  className="get-location-btn"
-                  onClick={getLocation}
-                  disabled={loading}
+          {/* Location Information - Only show for employees */}
+          {userType === 'employee' && (
+            <div className="form-section">
+              <h2>Location Information</h2>
+              <p className="form-info">
+                Your location helps match you with nearby jobs.
+              </p>
+              
+              <div className="form-group">
+                <label htmlFor="location">Choose Location</label>
+                <select
+                  id="location"
+                  name="location"
+                  value={selectedLocationId}
+                  onChange={(e) => {
+                    const locId = e.target.value;
+                    setSelectedLocationId(locId);
+                    
+                    if (locId) {
+                      const selectedLoc = availableLocations.find(loc => loc.id === parseInt(locId));
+                      setFormData({
+                        ...formData,
+                        latitude: selectedLoc.latitude,
+                        longitude: selectedLoc.longitude
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        latitude: '',
+                        longitude: ''
+                      });
+                    }
+                  }}
                 >
-                  {loading ? "Getting Location..." : "Get My Current Location"}
-                </button>
+                  <option value="">Select a location</option>
+                  {availableLocations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} - {loc.description}
+                    </option>
+                  ))}
+                </select>
+                <span className="field-note">Choose where you live</span>
               </div>
               
-              <div className="form-group-row">
-                <div className="form-group">
-                  <label htmlFor="latitude">Latitude</label>
-                  <input
-                    type="text"
-                    id="latitude"
-                    name="latitude"
-                    value={formData.latitude}
-                    onChange={handleChange}
-                    placeholder="e.g. 37.7749"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="longitude">Longitude</label>
-                  <input
-                    type="text"
-                    id="longitude"
-                    name="longitude"
-                    value={formData.longitude}
-                    onChange={handleChange}
-                    placeholder="e.g. -122.4194"
-                  />
+              <div className="location-fields">
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label htmlFor="latitude">Latitude</label>
+                    <input
+                      type="text"
+                      id="latitude"
+                      name="latitude"
+                      value={formData.latitude}
+                      onChange={handleChange}
+                      placeholder="e.g. 40.7128"
+                      disabled
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="longitude">Longitude</label>
+                    <input
+                      type="text"
+                      id="longitude"
+                      name="longitude"
+                      value={formData.longitude}
+                      onChange={handleChange}
+                      placeholder="e.g. -74.0060"
+                      disabled
+                    />
+                  </div>
                 </div>
               </div>
-              {errors.location && <span className="error-message location-error">{errors.location}</span>}
             </div>
-          </div>
+          )}
           
           <div className="form-actions">
             <button 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getJobById, applyForJob } from '../../services/api';
 import '../../styles/JobDetails.css';
+import { getLocationNameFromCoordinates } from '../../utils/locations';
 
 function JobDetails() {
   const { jobId } = useParams();
@@ -29,6 +30,11 @@ function JobDetails() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
   
+  const getLocationName = () => {
+    if (!job?.latitude || !job?.longitude) return "Location not specified";
+    return getLocationNameFromCoordinates(job.latitude, job.longitude);
+  };
+
   useEffect(() => {
     // Check if user is logged in as an employee
     if (!employeeId || userType !== 'employee') {
@@ -131,6 +137,7 @@ function JobDetails() {
                 <span className="job-type">Part-time</span>
                 <span className="job-time-slot">{job.time_slot} Shift</span>
                 <span className="job-salary">{formatSalary(job.salary)}</span>
+                <span className="job-location">{getLocationName()}</span>
               </div>
             </div>
             

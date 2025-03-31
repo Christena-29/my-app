@@ -176,10 +176,7 @@ function EmployerDashboard() {
           <Link to="/employer/jobs" className="nav-link">My Jobs</Link>
           <Link to="/employer/applications" className="nav-link">Applications</Link>
           <Link to="/employer/profile" className="nav-link">Profile</Link>
-          <Link to="/employer/nearby-talent" className="nav-link nearby-jobs-link">
-            <i className="location-pin-icon"></i> Nearby Talent
-          </Link>
-      </div>
+        </div>
                     
           <div className="user-profile">
             <div className="user-avatar">{getInitials(employerName)}</div>
@@ -197,9 +194,6 @@ function EmployerDashboard() {
           <p>Manage your job listings and applications.</p>
           <div className="welcome-actions">
             <Link to="/employer/jobs/new" className="post-job-btn">+ Post New Job</Link>
-            <Link to="/employer/nearby-talent" className="nearby-talent-button">
-              <i className="map-marker-icon"></i> Find Nearby Talent
-            </Link>
           </div>
         </section>
 

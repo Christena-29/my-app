@@ -6,6 +6,7 @@ import json
 import jwt
 import datetime
 import os
+import math
 
 # Create Flask application
 app = Flask(__name__, 
@@ -75,13 +76,13 @@ def register():
         if 'companyName' not in data:
             return jsonify({'status': 'error', 'message': 'Missing company name'}), 400
         
+        # Updated to remove location parameters
         result = db.register_employer(
             data['name'],
             data['email'],
             password,  # Use password directly
-            data['companyName'],
-            data.get('latitude'),
-            data.get('longitude')
+            data['companyName']
+            # Removed latitude and longitude parameters
         )
     elif data['userType'] == 'employee':
         # Additional required fields for employee
@@ -112,15 +113,27 @@ def register():
         return jsonify({'status': 'error', 'message': 'Invalid user type'}), 400
     
     # Check if registration was successful
-    if isinstance(result, dict) and 'error' in result:
+    if not result['success']:
         return jsonify({'status': 'error', 'message': result['error']}), 400
     
-    # Return success response
-    return jsonify({
+    # Generate JWT token for immediate login
+    token = create_token(result['user_id'], data['userType'])
+    
+    # Return success response with token
+    response_data = {
         'status': 'success',
-        'message': f'{data["userType"].capitalize()} registered successfully',
-        'userId': result
-    }), 201
+        'message': result['message'],
+        'userId': result['user_id'],
+        'userType': data['userType'],
+        'name': data['name'],
+        'token': token
+    }
+    
+    # Add user type specific data
+    if data['userType'] == 'employer':
+        response_data['companyName'] = data['companyName']
+    
+    return jsonify(response_data), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -237,14 +250,149 @@ def get_all_jobs():
 @app.route('/api/jobs/nearby', methods=['GET'])
 def get_nearby_jobs():
     try:
+        # Get location parameters
         latitude = float(request.args.get('lat', 0))
         longitude = float(request.args.get('lng', 0))
         radius = float(request.args.get('radius', 10))  # Default 10km radius
+        
+        conn = db.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get all jobs with location data
+        cursor.execute('''
+            SELECT j.*, e.name AS employer_name, e.company_name 
+            FROM jobs j
+            JOIN employers e ON j.employer_id = e.id
+            WHERE j.status = 'open' AND j.latitude IS NOT NULL AND j.longitude IS NOT NULL
+        ''')
+        
+        all_jobs = cursor.fetchall()
+        conn.close()
+        
+        # Calculate distance for each job and filter by radius
+        nearby_jobs = []
+        for job in all_jobs:
+            job_dict = dict(job)
+            
+            if job_dict['latitude'] and job_dict['longitude']:
+                # Calculate distance using Haversine formula
+                distance = haversine_distance(
+                    latitude, longitude,
+                    float(job_dict['latitude']), float(job_dict['longitude'])
+                )
+                
+                # Add job if within radius
+                if distance <= radius:
+                    job_dict['distance'] = round(distance, 2)  # Distance in km
+                    nearby_jobs.append(job_dict)
+        
+        # Sort by distance
+        nearby_jobs.sort(key=lambda x: x.get('distance', float('inf')))
+        
+        return jsonify({
+            'status': 'success',
+            'jobs': nearby_jobs
+        }), 200
+        
     except ValueError:
-        return jsonify({'status': 'error', 'message': 'Invalid location parameters'}), 400
+        return jsonify({
+            'status': 'error', 
+            'message': 'Invalid location parameters'
+        }), 400
+    except Exception as e:
+        print(f"Error finding nearby jobs: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'jobs': []
+        }), 500
+
+@app.route('/api/employees/nearby', methods=['GET'])
+def get_nearby_talent():
+    try:
+        # Get location parameters
+        latitude = float(request.args.get('lat', 0))
+        longitude = float(request.args.get('lng', 0))
+        radius = float(request.args.get('radius', 10))  # Default 10km radius
+        
+        conn = db.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get all employees with location data
+        cursor.execute('''
+            SELECT id, name, email, education, skills, experience, latitude, longitude
+            FROM employees 
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        ''')
+        
+        all_employees = cursor.fetchall()
+        conn.close()
+        
+        # Calculate distance for each employee and filter by radius
+        nearby_talent = []
+        for employee in all_employees:
+            emp_dict = dict(employee)
+            
+            # Parse skills JSON
+            if emp_dict.get('skills'):
+                try:
+                    emp_dict['skills'] = json.loads(emp_dict['skills'])
+                except:
+                    emp_dict['skills'] = []
+            else:
+                emp_dict['skills'] = []
+            
+            if emp_dict['latitude'] and emp_dict['longitude']:
+                # Calculate distance using Haversine formula
+                distance = haversine_distance(
+                    latitude, longitude,
+                    float(emp_dict['latitude']), float(emp_dict['longitude'])
+                )
+                
+                # Add employee if within radius
+                if distance <= radius:
+                    emp_dict['distance'] = round(distance, 2)  # Distance in km
+                    # Remove sensitive information
+                    if 'email' in emp_dict:
+                        del emp_dict['email']
+                    nearby_talent.append(emp_dict)
+        
+        # Sort by distance
+        nearby_talent.sort(key=lambda x: x.get('distance', float('inf')))
+        
+        return jsonify({
+            'status': 'success',
+            'talent': nearby_talent
+        }), 200
+        
+    except ValueError:
+        return jsonify({
+            'status': 'error', 
+            'message': 'Invalid location parameters'
+        }), 400
+    except Exception as e:
+        print(f"Error finding nearby talent: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'talent': []
+        }), 500
+
+# Helper function to calculate distance between two points using Haversine formula
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculate the great circle distance between two points 
+    on the earth specified in decimal degrees
+    """
+    # Convert decimal degrees to radians
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     
-    jobs = db.get_nearby_jobs(latitude, longitude, radius)
-    return jsonify({'status': 'success', 'jobs': jobs}), 200
+    # Haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    r = 6371  # Radius of earth in kilometers
+    return c * r
 
 @app.route('/api/jobs', methods=['POST'])
 def create_job():
@@ -837,6 +985,39 @@ def update_employer_password(employer_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/api/register/employer', methods=['POST'])
+def register_employer_route():
+    data = request.get_json()
+    
+    # Check required fields
+    required_fields = ['name', 'email', 'password', 'companyName']
+    if not all(field in data for field in required_fields):
+        return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
+    
+    # Register employer - without location parameters
+    result = db.register_employer(
+        data['name'],
+        data['email'],
+        data['password'],  # Password will be hashed in a real app
+        data['companyName']
+    )
+    
+    if result['success']:
+        # Generate JWT token
+        token = create_token(result['user_id'], 'employer')
+        
+        return jsonify({
+            'status': 'success',
+            'message': result['message'],
+            'userId': result['user_id'],
+            'userType': 'employer',
+            'name': data['name'],
+            'companyName': data['companyName'],
+            'token': token
+        }), 201
+    else:
+        return jsonify({'status': 'error', 'message': result['error']}), 400
 
 # Run the application
 if __name__ == '__main__':
