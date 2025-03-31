@@ -52,6 +52,9 @@
   display: flex;
   position: relative;
   overflow: hidden;
+  flex-direction: row;
+  height: calc(100vh - 70px); /* Adjust based on your header height */
+  overflow: hidden;
 }
 
 .simulated-map {
@@ -68,8 +71,11 @@
   flex: 1;
   background-color: #f5f5f5;
   position: relative;
-  background-image: radial-gradient(circle, #ddd 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image: 
+    radial-gradient(circle, #ddd 1px, transparent 1px),
+    radial-gradient(circle, #ddd 1px, transparent 1px);
+  background-size: 20px 20px, 100px 100px;
+  background-position: 0 0, 50px 50px;
 }
 
 .coordinates-grid {
@@ -144,17 +150,35 @@
   z-index: 20;
   left: 50%;
   top: 50%;
+  width: 36px;
+  height: 36px;
+  z-index: 25;
+  box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.3);
 }
 
 .job-marker {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   background-color: #EA4335;
   border: 2px solid white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-.job-marker.selected {
-  background-color: #FBBC05;
+.job-marker:hover, .job-marker.selected {
   transform: translate(-50%, -50%) scale(1.2);
-  z-index: 15;
+  z-index: 20;
+  background-color: #FBBC05;
 }
 
 .new-job-marker {
@@ -253,11 +277,38 @@
   padding: 12px;
   border-radius: 8px;
   background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .job-item:hover, .job-item.selected {
   border-color: #4a6bff;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.location-item:hover, .location-item.selected {
+  border-color: #4a6bff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.location-extra-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.job-description-preview {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .job-item h3 {
@@ -345,4 +396,102 @@
 
 .view-job-btn:hover {
   background-color: #3a5bff;
+}
+
+/* Job tooltip */
+.job-tooltip {
+  position: absolute;
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  min-width: 200px;
+  max-width: 300px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  z-index: 30;
+  transform: translateY(-50%);
+  border-left: 4px solid #4a6bff;
+}
+
+.job-tooltip h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.job-tooltip .company-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a6bff;
+  margin-bottom: 5px;
+}
+
+.job-tooltip .location-name,
+.job-tooltip .distance {
+  font-size: 13px;
+  color: #666;
+  margin: 3px 0;
+}
+
+.job-tooltip .view-details-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background-color: #4a6bff;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Update the legend section at the bottom of the file */
+.map-legend {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: white;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-size: 12px;
+  z-index: 100;
+}
+
+.legend-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.legend-marker {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.user-color {
+  background-color: #4285F4;
+}
+
+/* Remove these or just keep them as is */
+.residential-color {
+  background-color: #4285F4;
+  opacity: 0.7;
+}
+
+.business-color {
+  background-color: #34A853;
+  opacity: 0.7;
+}
+
+.job-color {
+  background-color: #EA4335;
 }

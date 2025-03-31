@@ -114,19 +114,45 @@ export const getAllJobs = async () => {
  * Get nearby jobs based on location
  * @param {number} latitude User's latitude
  * @param {number} longitude User's longitude
- * @param {number} radius Search radius in km
- * @returns {Promise<Array>} List of nearby jobs
+ * @param {number} radius Search radius in kilometers (default: 10)
+ * @returns {Promise<Object>} Nearby jobs
  */
 export const getNearbyJobs = async (latitude, longitude, radius = 10) => {
   try {
-    const response = await fetch(
-      `${API_URL}/jobs/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`
-    );
-    const data = await response.json();
-    return data.jobs || [];
+    const response = await fetch(`${API_URL}/jobs/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return await response.json();
   } catch (error) {
     console.error('Error fetching nearby jobs:', error);
-    return [];
+    return { status: 'error', message: error.message, jobs: [] };
+  }
+};
+
+/**
+ * Get nearby talent based on location
+ * @param {number} latitude Employer's latitude
+ * @param {number} longitude Employer's longitude
+ * @param {number} radius Search radius in kilometers (default: 10)
+ * @returns {Promise<Object>} Nearby talent (employees)
+ */
+export const getNearbyTalent = async (latitude, longitude, radius = 10) => {
+  try {
+    const response = await fetch(`${API_URL}/employees/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching nearby talent:', error);
+    return { status: 'error', message: error.message, talent: [] };
   }
 };
 

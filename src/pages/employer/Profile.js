@@ -200,9 +200,7 @@ function EmployerProfile() {
             <Link to="/employer/jobs" className="nav-link">My Jobs</Link>
             <Link to="/employer/applications" className="nav-link">Applications</Link>
             <Link to="/employer/profile" className="nav-link active">Profile</Link>
-            <Link to="/employer/nearby-talent" className="nav-link nearby-jobs-link">
-              <i className="location-pin-icon"></i> Nearby Talent
-            </Link>
+            {/* Nearby talent link removed */}
           </div>
           
           <div className="user-profile">
@@ -279,20 +277,6 @@ function EmployerProfile() {
                 <div className="profile-field">
                   <div className="field-label">Email</div>
                   <div className="field-value">{profile.email}</div>
-                </div>
-              </div>
-              
-              <div className="profile-section">
-                <h2>Location</h2>
-                
-                <div className="profile-field">
-                  <div className="field-label">Latitude</div>
-                  <div className="field-value">{profile.latitude || 'Not provided'}</div>
-                </div>
-                
-                <div className="profile-field">
-                  <div className="field-label">Longitude</div>
-                  <div className="field-value">{profile.longitude || 'Not provided'}</div>
                 </div>
               </div>
               
@@ -398,37 +382,6 @@ function EmployerProfile() {
                     disabled // Email cannot be changed
                   />
                   <span className="field-note">Email cannot be changed</span>
-                </div>
-              </div>
-              
-              <div className="form-section">
-                <h2>Location</h2>
-                <p className="location-help">
-                  Enter your business coordinates to improve matching with nearby job seekers.
-                </p>
-                
-                <div className="location-fields">
-                  <div className="form-group">
-                    <label>Latitude</label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="latitude"
-                      value={editableProfile.latitude || ''}
-                      onChange={handleProfileChange}
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>Longitude</label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="longitude"
-                      value={editableProfile.longitude || ''}
-                      onChange={handleProfileChange}
-                    />
-                  </div>
                 </div>
               </div>
             </>

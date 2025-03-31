@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createJob } from '../../services/api';
+import { getAllLocations } from '../../utils/locations';
 import '../../styles/PostJob.css';
 
 function PostJob() {
@@ -16,6 +17,8 @@ function PostJob() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [predefinedLocations] = useState(getAllLocations());
+  const [selectedLocationId, setSelectedLocationId] = useState('');
   
   // Retrieve employer ID from localStorage
   const employer_id = localStorage.getItem('userId');
@@ -216,20 +219,45 @@ function PostJob() {
               </div>
 
               <div className="form-section">
-                <h2>Job Location (Optional)</h2>
+                <h2>Job Location</h2>
                 <p className="form-info">
                   Adding location helps candidates find your job in location-based searches.
                 </p>
                 
-                <div className="form-group location-btn-container">
-                  <button
-                    type="button"
-                    className="get-location-btn"
-                    onClick={getLocation}
-                    disabled={loading}
+                <div className="form-group">
+                  <label htmlFor="location">Choose Location</label>
+                  <select
+                    id="location"
+                    name="location"
+                    value={selectedLocationId}
+                    onChange={(e) => {
+                      const locId = e.target.value;
+                      setSelectedLocationId(locId);
+                      
+                      if (locId) {
+                        const selectedLoc = predefinedLocations.find(loc => loc.id === parseInt(locId));
+                        setFormData({
+                          ...formData,
+                          latitude: selectedLoc.latitude,
+                          longitude: selectedLoc.longitude
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          latitude: '',
+                          longitude: ''
+                        });
+                      }
+                    }}
                   >
-                    {loading ? "Getting Location..." : "Use Current Location"}
-                  </button>
+                    <option value="">Select a location</option>
+                    {predefinedLocations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name} - {loc.description}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="field-note">Choose the district where the job is located</span>
                 </div>
                 
                 <div className="form-group-row">
@@ -241,7 +269,8 @@ function PostJob() {
                       name="latitude"
                       value={formData.latitude}
                       onChange={handleChange}
-                      placeholder="e.g. 37.7749"
+                      placeholder="e.g. 40.7128"
+                      disabled
                     />
                   </div>
                   
@@ -253,7 +282,8 @@ function PostJob() {
                       name="longitude"
                       value={formData.longitude}
                       onChange={handleChange}
-                      placeholder="e.g. -122.4194"
+                      placeholder="e.g. -74.0060"
+                      disabled
                     />
                   </div>
                 </div>
